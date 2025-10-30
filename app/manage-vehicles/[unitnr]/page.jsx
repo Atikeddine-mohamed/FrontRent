@@ -99,9 +99,6 @@ export default function VehicleDetailsPage() {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/manage_vehicles/${unitnr}`
       );
-      const resLockups = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/manage_vehicles/lockups`
-      );
 
       if (response.status === 404 || !response.ok) {
         setVehicle({ notFound: true });
@@ -112,6 +109,9 @@ export default function VehicleDetailsPage() {
       const data = await response.json();
       setVehicle(data.vehicle);
 
+      const resLockups = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/manage_vehicles/lockups`
+      );
       const lockupData = await resLockups.json();
       setLockups({
         models: lockupData.models,
@@ -355,14 +355,15 @@ export default function VehicleDetailsPage() {
                   disabled={!isEditing}
                 >
                   <SelectTrigger className="w-[100px]">
-                    <SelectValue placeholder="Sélectionner une marque" />
+                    <SelectValue placeholder="Marque" />
                   </SelectTrigger>
                   <SelectContent>
-                    {brands.map((brand) => (
-                      <SelectItem key={brand} value={brand}>
-                        {brand}
-                      </SelectItem>
-                    ))}
+                    {brands &&
+                      brands.map((brand) => (
+                        <SelectItem key={brand} value={brand}>
+                          {brand}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -374,14 +375,15 @@ export default function VehicleDetailsPage() {
                   disabled={!isEditing || !selectedBrand}
                 >
                   <SelectTrigger className="w-[100px]">
-                    <SelectValue placeholder="Sélectionner un modèle" />
+                    <SelectValue placeholder="Modèle" />
                   </SelectTrigger>
                   <SelectContent>
-                    {models.map((model) => (
-                      <SelectItem key={model} value={model}>
-                        {model}
-                      </SelectItem>
-                    ))}
+                    {models &&
+                      models.map((model) => (
+                        <SelectItem key={model} value={model}>
+                          {model}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -395,14 +397,15 @@ export default function VehicleDetailsPage() {
                   disabled={!isEditing || !selectedModel}
                 >
                   <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Sélectionner une version" />
+                    <SelectValue placeholder="Version" />
                   </SelectTrigger>
                   <SelectContent>
-                    {versions.map((v) => (
-                      <SelectItem key={v.id} value={v.id.toString()}>
-                        {v.version}
-                      </SelectItem>
-                    ))}
+                    {versions &&
+                      versions.map((v) => (
+                        <SelectItem key={v.id} value={v.id.toString()}>
+                          {v.version}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -457,19 +460,23 @@ export default function VehicleDetailsPage() {
             <div className="space-y-2">
               <Label>Couleur</Label>
               <Select
-                value={editedVehicle.ColorCode}
+                value={
+                  editedVehicle.ColorCode ? editedVehicle.ColorCode : "none"
+                }
                 onValueChange={(value) => handleInputChange("ColorCode", value)}
                 disabled={!isEditing}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Couleur" />
                 </SelectTrigger>
                 <SelectContent>
-                  {lockups.colors.map((color) => (
-                    <SelectItem key={color.ColorCode} value={color.ColorCode}>
-                      {color.Color}
-                    </SelectItem>
-                  ))}
+                  <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                  {lockups.colors &&
+                    lockups.colors.map((color) => (
+                      <SelectItem key={color.ColorCode} value={color.ColorCode}>
+                        {color.Color}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -529,36 +536,46 @@ export default function VehicleDetailsPage() {
             <div className="space-y-2">
               <Label>Type de carburant</Label>
               <Select
-                value={editedVehicle.FuelType}
+                value={editedVehicle.FuelType ? editedVehicle.FuelType : "none"}
                 onValueChange={(value) => handleInputChange("FuelType", value)}
                 disabled={!isEditing}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {lockups.fuels.map((fuel) => (
-                    <SelectItem key={fuel.FuelCode} value={fuel.FuelCode}>
-                      {fuel.FuelName}
-                    </SelectItem>
-                  ))}
+                  <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                  {lockups.fuels &&
+                    lockups.fuels.map((fuel) => (
+                      <SelectItem key={fuel.FuelCode} value={fuel.FuelCode}>
+                        {fuel.FuelName}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Statut</Label>
               <Select
-                value={editedVehicle.StatusID?.toString()}
+                value={
+                  editedVehicle.StatusID
+                    ? editedVehicle.StatusID.toString()
+                    : "none"
+                }
                 onValueChange={(value) =>
-                  handleInputChange("StatusID", parseInt(value))
+                  handleInputChange(
+                    "StatusID",
+                    value === "none" ? null : parseInt(value)
+                  )
                 }
                 disabled={!isEditing}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
-                  {lockups.statuses.map((status) => (
+                  <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                  {lockups.statuses?.map((status) => (
                     <SelectItem
                       key={status.StatusID}
                       value={status.StatusID.toString()}
@@ -604,21 +621,30 @@ export default function VehicleDetailsPage() {
               <div className="space-y-2">
                 <Label>Taxe</Label>
                 <Select
-                  value={editedVehicle.PurchaseTax?.toString()}
+                  value={
+                    editedVehicle.PurchaseTax
+                      ? editedVehicle.PurchaseTax?.toString()
+                      : "none"
+                  }
                   onValueChange={(value) =>
                     handleInputChange("PurchaseTax", parseInt(value))
                   }
                   disabled={!isEditing}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Taxe" />
                   </SelectTrigger>
                   <SelectContent>
-                    {lockups.taxes.map((tax) => (
-                      <SelectItem key={tax.TaxID} value={tax.TaxID.toString()}>
-                        {tax.TaxValue}%
-                      </SelectItem>
-                    ))}
+                    <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                    {lockups.taxes &&
+                      lockups.taxes.map((tax) => (
+                        <SelectItem
+                          key={tax.TaxID}
+                          value={tax.TaxID.toString()}
+                        >
+                          {tax.TaxValue}%
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -674,21 +700,30 @@ export default function VehicleDetailsPage() {
               <div className="space-y-2">
                 <Label>Taxe</Label>
                 <Select
-                  value={editedVehicle.SalesTax?.toString()}
+                  value={
+                    editedVehicle.SalesTax
+                      ? editedVehicle.SalesTax.toString()
+                      : "none"
+                  }
                   onValueChange={(value) =>
                     handleInputChange("SalesTax", parseInt(value))
                   }
                   disabled={!isEditing}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Taxe" />
                   </SelectTrigger>
                   <SelectContent>
-                    {lockups.taxes.map((tax) => (
-                      <SelectItem key={tax.TaxID} value={tax.TaxID.toString()}>
-                        {tax.TaxValue}%
-                      </SelectItem>
-                    ))}
+                    <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                    {lockups.taxes &&
+                      lockups.taxes.map((tax) => (
+                        <SelectItem
+                          key={tax.TaxID}
+                          value={tax.TaxID.toString()}
+                        >
+                          {tax.TaxValue}%
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -791,43 +826,47 @@ export default function VehicleDetailsPage() {
             <div className="space-y-2">
               <Label>Station</Label>
               <Select
-                value={editedVehicle.RentalStation}
+                value={editedVehicle.RentalStation ? editedVehicle.RentalStation : "none"}
                 onValueChange={(value) =>
                   handleInputChange("RentalStation", value)
                 }
                 disabled={!isEditing}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Station" />
                 </SelectTrigger>
                 <SelectContent>
-                  {lockups.stations.map((station) => (
-                    <SelectItem
-                      key={station.StationCode}
-                      value={station.StationCode}
-                    >
-                      {station.Station}
-                    </SelectItem>
-                  ))}
+                  <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                  {lockups.stations &&
+                    lockups.stations.map((station) => (
+                      <SelectItem
+                        key={station.StationCode}
+                        value={station.StationCode}
+                      >
+                        {station.Station}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Groupe</Label>
               <Select
-                value={editedVehicle.GroupCode}
+                value={editedVehicle.GroupCode ? editedVehicle.GroupCode : "none"}
                 onValueChange={(value) => handleInputChange("GroupCode", value)}
                 disabled={!isEditing}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Groupe" />
                 </SelectTrigger>
                 <SelectContent>
-                  {lockups.groups.map((group) => (
-                    <SelectItem key={group.GroupCode} value={group.GroupCode}>
-                      {group.GroupName}
-                    </SelectItem>
-                  ))}
+                  <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                  {lockups.groups &&
+                    lockups.groups.map((group) => (
+                      <SelectItem key={group.GroupCode} value={group.GroupCode}>
+                        {group.GroupName}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

@@ -22,17 +22,15 @@ export default function NewVehiclePage() {
   const [selectedBrand, setSelectedBrand] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [loading, setLoading] = useState(true);
-  const [lockups, setLockups] = useState([
-    {
-      models: [],
-      colors: [],
-      fuels: [],
-      statuses: [],
-      stations: [],
-      groups: [],
-      taxes: [],
-    },
-  ]);
+  const [lockups, setLockups] = useState({
+    models: [],
+    colors: [],
+    fuels: [],
+    statuses: [],
+    stations: [],
+    groups: [],
+    taxes: [],
+  });
   const [vehicle, setVehicle] = useState({
     PlateNr: "",
     PlateWW: "",
@@ -356,6 +354,9 @@ export default function NewVehiclePage() {
                   <SelectValue placeholder="Couleur" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem key={"none"} value={null}>
+                    Aucun
+                  </SelectItem>
                   {lockups.colors &&
                     lockups?.colors.map((color) => (
                       <SelectItem key={color.ColorCode} value={color.ColorCode}>
@@ -404,6 +405,7 @@ export default function NewVehiclePage() {
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem key={"none"} value={null}>Aucun</SelectItem>
                   {lockups.fuels &&
                     lockups?.fuels.map((fuel) => (
                       <SelectItem key={fuel.FuelCode} value={fuel.FuelCode}>
@@ -416,7 +418,7 @@ export default function NewVehiclePage() {
             <div className="space-y-2">
               <Label>Statut</Label>
               <Select
-                value={vehicle.StatusID?.toString()}
+                value={vehicle.StatusID ? vehicle.StatusID.toString() : null}
                 onValueChange={(value) =>
                   handleInputChange("StatusID", parseInt(value))
                 }
@@ -425,6 +427,7 @@ export default function NewVehiclePage() {
                   <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem key={"none"} value={null}>Aucun</SelectItem>
                   {lockups.statuses &&
                     lockups?.statuses.map((status) => (
                       <SelectItem
@@ -470,7 +473,7 @@ export default function NewVehiclePage() {
               <div className="space-y-2">
                 <Label>Taxe</Label>
                 <Select
-                  value={vehicle.PurchaseTax?.toString()}
+                  value={vehicle.PurchaseTax ? vehicle.PurchaseTax.toString() : null}
                   onValueChange={(value) =>
                     handleInputChange("PurchaseTax", parseInt(value))
                   }
@@ -479,6 +482,7 @@ export default function NewVehiclePage() {
                     <SelectValue placeholder="Taxe" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem key={"none"} value={null}>Aucun</SelectItem>
                     {lockups.taxes &&
                       lockups?.taxes.map((tax) => (
                         <SelectItem
@@ -541,7 +545,7 @@ export default function NewVehiclePage() {
               <div className="space-y-2">
                 <Label>Taxe</Label>
                 <Select
-                  value={vehicle.SalesTax?.toString()}
+                  value={vehicle.SalesTax ? vehicle.SalesTax.toString() : null}
                   onValueChange={(value) =>
                     handleInputChange("SalesTax", parseInt(value))
                   }
@@ -550,6 +554,7 @@ export default function NewVehiclePage() {
                     <SelectValue placeholder="Taxe" />
                   </SelectTrigger>
                   <SelectContent>
+                      <SelectItem key={"none"} value={null}>Aucun</SelectItem>
                     {lockups.taxes &&
                       lockups?.taxes.map((tax) => (
                         <SelectItem
@@ -667,6 +672,7 @@ export default function NewVehiclePage() {
                   <SelectValue placeholder="Station" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem key={"none"} value={null}>Aucun</SelectItem>
                   {lockups.stations &&
                     lockups?.stations.map((station) => (
                       <SelectItem
@@ -689,6 +695,7 @@ export default function NewVehiclePage() {
                   <SelectValue placeholder="Groupe" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem key={"none"} value={null}>Aucun</SelectItem>
                   {lockups.groups &&
                     lockups?.groups.map((group) => (
                       <SelectItem key={group.GroupCode} value={group.GroupCode}>
