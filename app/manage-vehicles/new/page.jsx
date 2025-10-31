@@ -22,6 +22,7 @@ export default function NewVehiclePage() {
   const [selectedBrand, setSelectedBrand] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState({});
   const [lockups, setLockups] = useState({
     models: [],
     colors: [],
@@ -97,6 +98,51 @@ export default function NewVehiclePage() {
     return (baseAmount * taxRate) / 100;
   };
 
+  const validateVehicle = () => {
+    const newErrors = {};
+
+    // Required fields validation
+    if (!vehicle.PlateNr) {
+      newErrors.PlateNr = "La plaque d'immatriculation est requise";
+    } else if (!/^[0-9]+-[A-Za-z]-[0-9]{1,3}$/.test(vehicle.PlateNr)) {
+      newErrors.PlateNr =
+        "Format invalide (ex: 123-AB-456)";
+    }
+
+    if (vehicle.PlateWW && !/^[Ww]{2,3}-?\d+$/.test(vehicle.PlateWW)) {
+      newErrors.PlateWW =
+        "Format invalide (ex: WW-123456)";
+    }
+
+    if (vehicle.ChassiNr && !/^[A-Za-z0-9]+$/.test(vehicle.ChassiNr)) {
+      newErrors.ChassiNr = "Le numéro de châssis doit être composé uniquement de caractères alphanumériques.";
+    }
+
+    if (!selectedBrand) {
+      newErrors.Brand = "La marque est requise";
+    }
+
+    if (!selectedModel) {
+      newErrors.Model = "Le modèle est requis";
+    }
+
+    if (!vehicle.ModelID) {
+      newErrors.ModelID = "La version est requise";
+    }
+
+    // Length validation
+    if (vehicle.FleetType && vehicle.FleetType.length > 10) {
+      newErrors.FleetType = "Ne doit pas dépasser 10 caractères";
+    }
+
+    if (vehicle.DocumentNr && vehicle.DocumentNr.length > 10) {
+      newErrors.DocumentNr = "Ne doit pas dépasser 10 caractères";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   useEffect(() => {
     fetchLockups();
   }, []);
@@ -121,6 +167,11 @@ export default function NewVehiclePage() {
   };
 
   const handleInputChange = (field, value) => {
+    // Clear error when field is modified
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+
     setVehicle((prev) => {
       const newData = { ...prev, [field]: value };
 
@@ -157,6 +208,12 @@ export default function NewVehiclePage() {
   };
 
   const handleSave = async () => {
+    // Validate before submitting
+    const isValid = validateVehicle();
+    if (!isValid) {
+      return;
+    }
+
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/manage_vehicles`,
@@ -232,28 +289,55 @@ export default function NewVehiclePage() {
           <CardContent className="grid gap-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Plaque d'immatriculation</Label>
+                <Label>
+                  Plaque d'immatriculation
+                  <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   value={vehicle.PlateNr}
                   onChange={(e) => handleInputChange("PlateNr", e.target.value)}
+                  className={
+                    errors.PlateNr
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
                 />
+                {errors.PlateNr && (
+                  <p className="text-red-500 text-sm mt-1">{errors.PlateNr}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Plaque WW</Label>
                 <Input
                   value={vehicle.PlateWW}
                   onChange={(e) => handleInputChange("PlateWW", e.target.value)}
+                  className={
+                    errors.PlateWW
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
                 />
+                {errors.PlateWW && (
+                  <p className="text-red-500 text-sm mt-1">{errors.PlateWW}</p>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Marque</Label>
+                <Label>
+                  Marque<span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={selectedBrand}
                   onValueChange={(value) => handleInputChange("Brand", value)}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger
+                    className={`w-[180px] ${
+                      errors.Brand
+                        ? "border-red-500 focus-visible:ring-red-500"
+                        : ""
+                    }`}
+                  >
                     <SelectValue placeholder="Marque" />
                   </SelectTrigger>
                   <SelectContent>
@@ -265,15 +349,26 @@ export default function NewVehiclePage() {
                       ))}
                   </SelectContent>
                 </Select>
+                {errors.Brand && (
+                  <p className="text-red-500 text-sm mt-1">{errors.Brand}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label>Modèle</Label>
+                <Label>
+                  Modèle<span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={selectedModel}
                   onValueChange={(value) => handleInputChange("Model", value)}
                   disabled={!selectedBrand}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger
+                    className={`w-[180px] ${
+                      errors.Model
+                        ? "border-red-500 focus-visible:ring-red-500"
+                        : ""
+                    }`}
+                  >
                     <SelectValue placeholder="Modèle" />
                   </SelectTrigger>
                   <SelectContent>
@@ -285,9 +380,14 @@ export default function NewVehiclePage() {
                       ))}
                   </SelectContent>
                 </Select>
+                {errors.Model && (
+                  <p className="text-red-500 text-sm mt-1">{errors.Model}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label>Version</Label>
+                <Label>
+                  Version<span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={vehicle.ModelID?.toString()}
                   onValueChange={(value) =>
@@ -295,7 +395,13 @@ export default function NewVehiclePage() {
                   }
                   disabled={!selectedModel}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger
+                    className={`w-[180px] ${
+                      errors.ModelID
+                        ? "border-red-500 focus-visible:ring-red-500"
+                        : ""
+                    }`}
+                  >
                     <SelectValue placeholder="Version" />
                   </SelectTrigger>
                   <SelectContent>
@@ -307,6 +413,9 @@ export default function NewVehiclePage() {
                       ))}
                   </SelectContent>
                 </Select>
+                {errors.ModelID && (
+                  <p className="text-red-500 text-sm mt-1">{errors.ModelID}</p>
+                )}
               </div>
             </div>
             <div className="space-y-2">
@@ -325,7 +434,17 @@ export default function NewVehiclePage() {
                   onChange={(e) =>
                     handleInputChange("DocumentNr", e.target.value)
                   }
+                  className={
+                    errors.DocumentNr
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
                 />
+                {errors.DocumentNr && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.DocumentNr}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Type de flotte</Label>
@@ -334,7 +453,17 @@ export default function NewVehiclePage() {
                   onChange={(e) =>
                     handleInputChange("FleetType", e.target.value)
                   }
+                  className={
+                    errors.FleetType
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
                 />
+                {errors.FleetType && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.FleetType}
+                  </p>
+                )}
               </div>
             </div>
             <div className="space-y-2">
@@ -342,7 +471,15 @@ export default function NewVehiclePage() {
               <Input
                 value={vehicle.ChassiNr}
                 onChange={(e) => handleInputChange("ChassiNr", e.target.value)}
+                className={
+                  errors.ChassiNr
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : ""
+                }
               />
+              {errors.ChassiNr && (
+                <p className="text-red-500 text-sm mt-1">{errors.ChassiNr}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Couleur</Label>
@@ -405,7 +542,9 @@ export default function NewVehiclePage() {
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key={"none"} value={null}>Aucun</SelectItem>
+                  <SelectItem key={"none"} value={null}>
+                    Aucun
+                  </SelectItem>
                   {lockups.fuels &&
                     lockups?.fuels.map((fuel) => (
                       <SelectItem key={fuel.FuelCode} value={fuel.FuelCode}>
@@ -427,7 +566,9 @@ export default function NewVehiclePage() {
                   <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key={"none"} value={null}>Aucun</SelectItem>
+                  <SelectItem key={"none"} value={null}>
+                    Aucun
+                  </SelectItem>
                   {lockups.statuses &&
                     lockups?.statuses.map((status) => (
                       <SelectItem
@@ -473,7 +614,9 @@ export default function NewVehiclePage() {
               <div className="space-y-2">
                 <Label>Taxe</Label>
                 <Select
-                  value={vehicle.PurchaseTax ? vehicle.PurchaseTax.toString() : null}
+                  value={
+                    vehicle.PurchaseTax ? vehicle.PurchaseTax.toString() : null
+                  }
                   onValueChange={(value) =>
                     handleInputChange("PurchaseTax", parseInt(value))
                   }
@@ -482,7 +625,9 @@ export default function NewVehiclePage() {
                     <SelectValue placeholder="Taxe" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem key={"none"} value={null}>Aucun</SelectItem>
+                    <SelectItem key={"none"} value={null}>
+                      Aucun
+                    </SelectItem>
                     {lockups.taxes &&
                       lockups?.taxes.map((tax) => (
                         <SelectItem
@@ -554,7 +699,9 @@ export default function NewVehiclePage() {
                     <SelectValue placeholder="Taxe" />
                   </SelectTrigger>
                   <SelectContent>
-                      <SelectItem key={"none"} value={null}>Aucun</SelectItem>
+                    <SelectItem key={"none"} value={null}>
+                      Aucun
+                    </SelectItem>
                     {lockups.taxes &&
                       lockups?.taxes.map((tax) => (
                         <SelectItem
@@ -672,7 +819,9 @@ export default function NewVehiclePage() {
                   <SelectValue placeholder="Station" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key={"none"} value={null}>Aucun</SelectItem>
+                  <SelectItem key={"none"} value={null}>
+                    Aucun
+                  </SelectItem>
                   {lockups.stations &&
                     lockups?.stations.map((station) => (
                       <SelectItem
@@ -695,7 +844,9 @@ export default function NewVehiclePage() {
                   <SelectValue placeholder="Groupe" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key={"none"} value={null}>Aucun</SelectItem>
+                  <SelectItem key={"none"} value={null}>
+                    Aucun
+                  </SelectItem>
                   {lockups.groups &&
                     lockups?.groups.map((group) => (
                       <SelectItem key={group.GroupCode} value={group.GroupCode}>

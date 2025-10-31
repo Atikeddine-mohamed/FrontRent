@@ -41,6 +41,7 @@ export default function VehicleDetailsPage() {
   const [vehicle, setVehicle] = useState(null);
   const [lockups, setLockups] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [errors, setErrors] = useState({});
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editedVehicle, setEditedVehicle] = useState(null);
   const [selectedBrand, setSelectedBrand] = useState("");
@@ -132,6 +133,77 @@ export default function VehicleDetailsPage() {
     }
   };
 
+  const validateVehicle = () => {
+    const newErrors = {};
+
+    // Required fields validation
+    if (!editedVehicle.PlateNr) {
+      newErrors.PlateNr = "La plaque d'immatriculation est requise";
+    } else if (!/^[0-9]+-[A-Za-z]-[0-9]{1,3}$/.test(editedVehicle.PlateNr)) {
+      newErrors.PlateNr = "Format invalide (ex: 123-AB-456)";
+    }
+
+    if (
+      editedVehicle.ChassiNr &&
+      !/^[A-Za-z0-9]+$/.test(editedVehicle.ChassiNr)
+    ) {
+      newErrors.ChassiNr =
+        "Le numéro de châssis doit être composé uniquement de caractères alphanumériques.";
+    }
+
+    if (!selectedBrand) {
+      newErrors.Brand = "La marque est requise";
+    }
+
+    if (!selectedModel) {
+      newErrors.Model = "Le modèle est requis";
+    }
+
+    if (!editedVehicle.ModelID) {
+      newErrors.ModelID = "La version est requise";
+    }
+
+    // Numeric validations
+    if (editedVehicle.CurrentKm < 0) {
+      newErrors.CurrentKm = "Le kilométrage ne peut pas être négatif";
+    }
+
+    if (editedVehicle.CurrentFuel < 0 || editedVehicle.CurrentFuel > 100) {
+      newErrors.CurrentFuel = "Le niveau de carburant doit être entre 0 et 100";
+    }
+
+    // Date validations
+    if (editedVehicle.PurchaseDate && editedVehicle.SalesDate) {
+      const purchaseDate = new Date(editedVehicle.PurchaseDate);
+      const salesDate = new Date(editedVehicle.SalesDate);
+      if (salesDate < purchaseDate) {
+        newErrors.SalesDate =
+          "La date de vente ne peut pas être antérieure à la date d'achat";
+      }
+    }
+
+    // Length validation
+    if (editedVehicle.FleetType && editedVehicle.FleetType.length > 10) {
+      newErrors.FleetType = "Ne doit pas dépasser 10 caractères";
+    }
+
+    if (editedVehicle.DocumentNr && editedVehicle.DocumentNr.length > 10) {
+      newErrors.DocumentNr = "Ne doit pas dépasser 10 caractères";
+    }
+
+    // Financial validations
+    if (editedVehicle.PurchaseHT < 0) {
+      newErrors.PurchaseHT = "Le prix HT ne peut pas être négatif";
+    }
+
+    if (editedVehicle.SalesHT < 0) {
+      newErrors.SalesHT = "Le prix HT ne peut pas être négatif";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleEdit = () => {
     setIsEditing(true);
   };
@@ -139,9 +211,16 @@ export default function VehicleDetailsPage() {
   const handleCancel = () => {
     setIsEditing(false);
     fetchVehicleData();
+    setErrors({});
   };
 
   const handleSave = async () => {
+    // Validate before submitting
+    const isValid = validateVehicle();
+    if (!isValid) {
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await fetch(
@@ -190,6 +269,11 @@ export default function VehicleDetailsPage() {
   };
 
   const handleInputChange = (field, value) => {
+    // Clear error when field is modified
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+
     setEditedVehicle((prev) => {
       const newData = { ...prev, [field]: value };
 
@@ -338,23 +422,42 @@ export default function VehicleDetailsPage() {
                 <Input value={editedVehicle.UnitNr || ""} disabled />
               </div>
               <div className="space-y-2">
-                <Label>Plaque d'immatriculation</Label>
+                <Label>
+                  Plaque d'immatriculation
+                  <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   value={editedVehicle.PlateNr || ""}
                   onChange={(e) => handleInputChange("PlateNr", e.target.value)}
                   disabled={!isEditing}
+                  className={
+                    errors.PlateNr
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
                 />
+                {errors.PlateNr && (
+                  <p className="text-red-500 text-sm mt-1">{errors.PlateNr}</p>
+                )}
               </div>
             </div>
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-2">
-                <Label>Marque</Label>
+                <Label>
+                  Marque<span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={selectedBrand}
                   onValueChange={(value) => handleInputChange("Brand", value)}
                   disabled={!isEditing}
                 >
-                  <SelectTrigger className="w-[100px]">
+                  <SelectTrigger
+                    className={`w-[100px] ${
+                      errors.Brand
+                        ? "border-red-500 focus-visible:ring-red-500"
+                        : ""
+                    }`}
+                  >
                     <SelectValue placeholder="Marque" />
                   </SelectTrigger>
                   <SelectContent>
@@ -366,15 +469,26 @@ export default function VehicleDetailsPage() {
                       ))}
                   </SelectContent>
                 </Select>
+                {errors.Brand && (
+                  <p className="text-red-500 text-sm mt-1">{errors.Brand}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label>Modèle</Label>
+                <Label>
+                  Modèle<span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={selectedModel}
                   onValueChange={(value) => handleInputChange("Model", value)}
                   disabled={!isEditing || !selectedBrand}
                 >
-                  <SelectTrigger className="w-[100px]">
+                  <SelectTrigger
+                    className={`w-[100px] ${
+                      errors.Model
+                        ? "border-red-500 focus-visible:ring-red-500"
+                        : ""
+                    }`}
+                  >
                     <SelectValue placeholder="Modèle" />
                   </SelectTrigger>
                   <SelectContent>
@@ -386,9 +500,14 @@ export default function VehicleDetailsPage() {
                       ))}
                   </SelectContent>
                 </Select>
+                {errors.Model && (
+                  <p className="text-red-500 text-sm mt-1">{errors.Model}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label>Version</Label>
+                <Label>
+                  Version<span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={editedVehicle.ModelID?.toString()}
                   onValueChange={(value) =>
@@ -396,7 +515,13 @@ export default function VehicleDetailsPage() {
                   }
                   disabled={!isEditing || !selectedModel}
                 >
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger
+                    className={`w-[200px] ${
+                      errors.ModelID
+                        ? "border-red-500 focus-visible:ring-red-500"
+                        : ""
+                    }`}
+                  >
                     <SelectValue placeholder="Version" />
                   </SelectTrigger>
                   <SelectContent>
@@ -413,7 +538,11 @@ export default function VehicleDetailsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Plaque WW</Label>
-                <Input value={editedVehicle.PlateWW || ""} disabled={true} />
+                <Input
+                  value={editedVehicle.PlateWW || ""}
+                  onChange={(e) => handleInputChange("PlateWW", e.target.value)}
+                  disabled={true}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Date de mise en circulation</Label>
@@ -455,7 +584,15 @@ export default function VehicleDetailsPage() {
                 value={editedVehicle.ChassiNr || ""}
                 onChange={(e) => handleInputChange("ChassiNr", e.target.value)}
                 disabled={!isEditing}
+                className={
+                  errors.ChassiNr
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : ""
+                }
               />
+              {errors.ChassiNr && (
+                <p className="text-red-500 text-sm mt-1">{errors.ChassiNr}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Couleur</Label>
@@ -470,7 +607,9 @@ export default function VehicleDetailsPage() {
                   <SelectValue placeholder="Couleur" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                  <SelectItem key={"none"} value="none">
+                    Aucun
+                  </SelectItem>
                   {lockups.colors &&
                     lockups.colors.map((color) => (
                       <SelectItem key={color.ColorCode} value={color.ColorCode}>
@@ -544,7 +683,9 @@ export default function VehicleDetailsPage() {
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                  <SelectItem key={"none"} value="none">
+                    Aucun
+                  </SelectItem>
                   {lockups.fuels &&
                     lockups.fuels.map((fuel) => (
                       <SelectItem key={fuel.FuelCode} value={fuel.FuelCode}>
@@ -574,7 +715,9 @@ export default function VehicleDetailsPage() {
                   <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                  <SelectItem key={"none"} value="none">
+                    Aucun
+                  </SelectItem>
                   {lockups.statuses?.map((status) => (
                     <SelectItem
                       key={status.StatusID}
@@ -635,7 +778,9 @@ export default function VehicleDetailsPage() {
                     <SelectValue placeholder="Taxe" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                    <SelectItem key={"none"} value="none">
+                      Aucun
+                    </SelectItem>
                     {lockups.taxes &&
                       lockups.taxes.map((tax) => (
                         <SelectItem
@@ -714,7 +859,9 @@ export default function VehicleDetailsPage() {
                     <SelectValue placeholder="Taxe" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                    <SelectItem key={"none"} value="none">
+                      Aucun
+                    </SelectItem>
                     {lockups.taxes &&
                       lockups.taxes.map((tax) => (
                         <SelectItem
@@ -826,7 +973,11 @@ export default function VehicleDetailsPage() {
             <div className="space-y-2">
               <Label>Station</Label>
               <Select
-                value={editedVehicle.RentalStation ? editedVehicle.RentalStation : "none"}
+                value={
+                  editedVehicle.RentalStation
+                    ? editedVehicle.RentalStation
+                    : "none"
+                }
                 onValueChange={(value) =>
                   handleInputChange("RentalStation", value)
                 }
@@ -836,7 +987,9 @@ export default function VehicleDetailsPage() {
                   <SelectValue placeholder="Station" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                  <SelectItem key={"none"} value="none">
+                    Aucun
+                  </SelectItem>
                   {lockups.stations &&
                     lockups.stations.map((station) => (
                       <SelectItem
@@ -852,7 +1005,9 @@ export default function VehicleDetailsPage() {
             <div className="space-y-2">
               <Label>Groupe</Label>
               <Select
-                value={editedVehicle.GroupCode ? editedVehicle.GroupCode : "none"}
+                value={
+                  editedVehicle.GroupCode ? editedVehicle.GroupCode : "none"
+                }
                 onValueChange={(value) => handleInputChange("GroupCode", value)}
                 disabled={!isEditing}
               >
@@ -860,7 +1015,9 @@ export default function VehicleDetailsPage() {
                   <SelectValue placeholder="Groupe" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key={"none"} value="none">Aucun</SelectItem>
+                  <SelectItem key={"none"} value="none">
+                    Aucun
+                  </SelectItem>
                   {lockups.groups &&
                     lockups.groups.map((group) => (
                       <SelectItem key={group.GroupCode} value={group.GroupCode}>
