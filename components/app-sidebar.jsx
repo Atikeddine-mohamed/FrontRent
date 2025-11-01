@@ -46,19 +46,23 @@ const data = {
       isActive: true,
       items: [
         {
-          title: "Gestion des vehicules",
+          title: "Gestion des Vehicules",
           url: "/manage-vehicles",
         },
         {
-          title: "Marques/Modeles",
+          title: "Gestion des Marques",
+          url: "/brands",
+        },
+        {
+          title: "Gestion des Modèles",
           url: "#",
         },
         {
-          title: "Groupes de vehicules",
+          title: "Groupes de Véhicules",
           url: "#",
         },
         {
-          title: "Characteristiques",
+          title: "Caractéristiques des Véhicules",
           url: "#",
         },
       ],
