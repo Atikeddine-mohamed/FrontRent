@@ -223,6 +223,7 @@ export default function BrandsPage() {
               }}
               pagination={true}
               paginationPageSize={15}
+              paginationPageSizeSelector={[15, 30, 50]}
               localeText={frenchLocale}
             />
           </div>

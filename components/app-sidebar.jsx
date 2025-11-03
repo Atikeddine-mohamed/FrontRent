@@ -40,29 +40,29 @@ const data = {
   },
   fleetManagment: [
     {
-      title: "Vehicules",
+      title: "Flotte",
       url: "#",
       icon: Car,
       isActive: true,
       items: [
         {
-          title: "Gestion des Vehicules",
+          title: "Véhicules",
           url: "/manage-vehicles",
         },
         {
-          title: "Gestion des Marques",
+          title: "Marques",
           url: "/brands",
         },
         {
-          title: "Gestion des Modèles",
+          title: "Modèles",
+          url: "/models",
+        },
+        {
+          title: "Groupes",
           url: "#",
         },
         {
-          title: "Groupes de Véhicules",
-          url: "#",
-        },
-        {
-          title: "Caractéristiques des Véhicules",
+          title: "Caractéristiques",
           url: "#",
         },
       ],
