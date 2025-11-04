@@ -151,18 +151,11 @@ export default function ModelDetailsPage() {
         }
       );
 
-      if (!modelResponse.ok || !lockupsResponse.ok) {
-        let message = "Il y a un problème avec le serveur.";
-
-        if (!modelResponse.ok) {
-          message = `Erreur du serveur lors du chargement du modèle (code: ${modelResponse.status})`;
-        } else if (!lockupsResponse.ok) {
-          message = `Erreur du serveur lors du chargement des données de référence (code: ${lockupsResponse.status})`;
-        }
-
+      if (!response.ok) {
+        let message = `Erreur du serveur lors du chargement du modèle (code: ${response.status})`;
         setModel({ error: message, serverError: true });
         setLoading(false);
-        return; // stop execution gracefully
+        return;
       }
 
       await fetchModelData();
@@ -202,8 +195,6 @@ export default function ModelDetailsPage() {
       }
     } catch (error) {
       console.error("Error deleting model:", error);
-      setErrorMessage("Erreur lors de la suppression");
-      setShowErrorDialog(true);
     } finally {
       setLoading(false);
     }
