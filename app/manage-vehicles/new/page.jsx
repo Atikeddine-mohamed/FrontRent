@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import { ArrowLeft, Save, X } from "lucide-react";
+import { ArrowLeft, Save, ServerCog, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -105,17 +105,16 @@ export default function NewVehiclePage() {
     if (!vehicle.PlateNr) {
       newErrors.PlateNr = "La plaque d'immatriculation est requise";
     } else if (!/^[0-9]+-[A-Za-z]-[0-9]{1,3}$/.test(vehicle.PlateNr)) {
-      newErrors.PlateNr =
-        "Format invalide (ex: 123-AB-456)";
+      newErrors.PlateNr = "Format invalide (ex: 123-AB-456)";
     }
 
     if (vehicle.PlateWW && !/^[Ww]{2,3}-?\d+$/.test(vehicle.PlateWW)) {
-      newErrors.PlateWW =
-        "Format invalide (ex: WW-123456)";
+      newErrors.PlateWW = "Format invalide (ex: WW-123456)";
     }
 
     if (vehicle.ChassiNr && !/^[A-Za-z0-9]+$/.test(vehicle.ChassiNr)) {
-      newErrors.ChassiNr = "Le numéro de châssis doit être composé uniquement de caractères alphanumériques.";
+      newErrors.ChassiNr =
+        "Le numéro de châssis doit être composé uniquement de caractères alphanumériques.";
     }
 
     if (!selectedBrand) {
@@ -154,7 +153,9 @@ export default function NewVehiclePage() {
         `${process.env.NEXT_PUBLIC_API_URL}/manage_vehicles/lockups`
       );
       if (!response.ok) {
-        // throw new Error(`HTTP error! status: ${response.status}`);
+        let message = `Erreur lors de la récupération des données. (code: ${response.status})`;
+        setLockups({ message: message, serverError: true });
+        setLoading(false);
         return;
       }
       const data = await response.json();
@@ -243,6 +244,29 @@ export default function NewVehiclePage() {
         <p className="text-lg font-medium text-muted-foreground">
           Chargement...
         </p>
+      </div>
+    );
+  }
+
+  if (lockups?.serverError) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6">
+        <div className="flex flex-col items-center gap-4">
+          <ServerCog className="h-16 w-16 text-muted-foreground" />
+          <h2 className="text-2xl font-semibold text-foreground">
+            Erreur de serveur
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            {lockups.message}
+          </p>
+        </div>
+        <Button
+          onClick={() => router.push("/manage-vehicles")}
+          className="mt-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour à la liste
+        </Button>
       </div>
     );
   }

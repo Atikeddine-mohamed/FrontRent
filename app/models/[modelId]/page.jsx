@@ -2,7 +2,17 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Pencil, X, Trash2, Save, Loader2, Car } from "lucide-react";
+import {
+  ArrowLeft,
+  Pencil,
+  X,
+  Trash2,
+  Save,
+  Loader2,
+  Car,
+  ServerCog,
+  RotateCw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -141,9 +151,18 @@ export default function ModelDetailsPage() {
         }
       );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message);
+      if (!modelResponse.ok || !lockupsResponse.ok) {
+        let message = "Il y a un problème avec le serveur.";
+
+        if (!modelResponse.ok) {
+          message = `Erreur du serveur lors du chargement du modèle (code: ${modelResponse.status})`;
+        } else if (!lockupsResponse.ok) {
+          message = `Erreur du serveur lors du chargement des données de référence (code: ${lockupsResponse.status})`;
+        }
+
+        setModel({ error: message, serverError: true });
+        setLoading(false);
+        return; // stop execution gracefully
       }
 
       await fetchModelData();
@@ -177,7 +196,7 @@ export default function ModelDetailsPage() {
         let message = "Il y a un problème avec le serveur.";
         setModel({ error: message, serverError: true });
         setLoading(false);
-        return
+        return;
       } else {
         router.push("/models");
       }
@@ -256,7 +275,7 @@ export default function ModelDetailsPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6">
         <div className="flex flex-col items-center gap-4">
-          <Car className="h-16 w-16 text-muted-foreground" />
+          <ServerCog className="h-16 w-16 text-muted-foreground" />
           <h2 className="text-2xl font-semibold text-foreground">
             Erreur de chargement du modèle
           </h2>

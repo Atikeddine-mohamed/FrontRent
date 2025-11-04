@@ -3,7 +3,16 @@
 import { useEffect, useState, useRef } from "react";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import { Loader2, Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import {
+  Loader2,
+  Pencil,
+  Plus,
+  RotateCw,
+  Save,
+  ServerCog,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +40,7 @@ export default function BrandsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
 
   const [colDefs] = useState([
@@ -81,7 +90,12 @@ export default function BrandsPage() {
     try {
       setLoading(true);
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/brands`);
-      if (!response.ok) throw new Error("Failed to fetch brands");
+      if (!response.ok) {
+        let message = `Erreur lors de la récupération des marques. (code: ${response.status})`;
+        setErrorMessage({ message: message, serverError: true });
+        setLoading(false);
+        return;
+      }
       const data = await response.json();
       setRowData(data);
     } catch (error) {
@@ -120,7 +134,10 @@ export default function BrandsPage() {
         setErrorMessage(data.message);
         setShowErrorDialog(true);
       } else if (!response.ok) {
-        throw new Error(data.message);
+        let message = `Erreur lors de la récupération des marques. (code: ${response.status})`;
+        setErrorMessage({ message: message, serverError: true });
+        setLoading(false);
+        return;
       } else {
         await fetchBrands();
       }
@@ -158,8 +175,10 @@ export default function BrandsPage() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message);
+        let message = `Erreur lors de la récupération des marques. (code: ${response.status})`;
+        setErrorMessage({ message: message, serverError: true });
+        setLoading(false);
+        return;
       }
 
       await fetchBrands();
@@ -197,6 +216,26 @@ export default function BrandsPage() {
         <p className="text-lg font-medium text-muted-foreground">
           Chargement...
         </p>
+      </div>
+    );
+  }
+
+  if (errorMessage?.serverError) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6">
+        <div className="flex flex-col items-center gap-4">
+          <ServerCog className="h-16 w-16 text-muted-foreground" />
+          <h2 className="text-2xl font-semibold text-foreground">
+            Erreur de chargement des marques
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            {errorMessage.message}
+          </p>
+        </div>
+        <Button onClick={() => router.push("/brands")} className="mt-4">
+          <RotateCw className="h-4 w-4 mr-2" />
+          Veuillez rafraîchir la page
+        </Button>
       </div>
     );
   }
